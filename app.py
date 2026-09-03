@@ -42,44 +42,26 @@ with st.expander('🔍 Analizar texto', expanded=True):
             translation = translator.translate(text, src="es", dest="en")
             trans_text = translation.text
             blob = TextBlob(trans_text)
-            
             polarity = blob.sentiment.polarity
             
-            # 2. Análisis por similitud de palabras/raíces usando TextBlob (en español e inglés)
+            # 2. Análisis por presencia de palabras/raíces
             text_lower = text.lower()
             
-            # Raíces/palabras asociadas a Felicidad
             palabras_feliz = ["feliz", "felicidad", "alegre", "content", "emocionad", "gust", "encant", "genial", "super", "sonre", "happy", "joy", "glad"]
-            
-            # Raíces/palabras asociadas a Tristeza / Frustración
             palabras_triste = ["triste", "depri", "llor", "solo", "solit", "aburr", "feo", "dolor", "pena", "no me deja", "no me quiere", "no puedo", "enoj", "rabia", "molest", "sad", "cry"]
 
-            # Evaluación de similitud por presencia de raíz (lemmas)
             es_feliz = any(p in text_lower for p in palabras_feliz)
             es_triste = any(p in text_lower for p in palabras_triste)
             
-            # Ajuste de polaridad basado en las similitudes detectadas por TextBlob
             if es_feliz and not es_triste:
                 polarity = max(polarity, 0.5)
             elif es_triste and not es_feliz:
                 polarity = min(polarity, -0.5)
 
-            # 3. Mapeo a porcentaje de la barra
-            porcentaje_animo = int((polarity + 1) * 50)
-
             st.markdown("---")
             st.markdown(f"### 📊 Resultado para **{nombre_nino}**")
             
-            # Barrita visual
-            col_emo1, col_emo2, col_emo3 = st.columns([1, 6, 1])
-            with col_emo1:
-                st.write("😔 *(Triste)*")
-            with col_emo2:
-                st.progress(porcentaje_animo)
-            with col_emo3:
-                st.write("😄 *(Feliz)*")
-
-            # 4. Mensajes simples directos
+            # 3. Resultado directo (sin barrita)
             if polarity > 0.15:
                 st.success(f"😄 **{nombre_nino} está feliz.**")
             elif polarity < -0.15:
