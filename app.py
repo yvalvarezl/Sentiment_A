@@ -1,4 +1,3 @@
-streamlit-lottie
 
 from streamlit_lottie import st_lottie
 import json
