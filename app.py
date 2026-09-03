@@ -1,5 +1,6 @@
 streamlit-lottie
 
+from streamlit_lottie import st_lottie
 import json
 from textblob import TextBlob
 import pandas as pd
