@@ -8,6 +8,10 @@ import streamlit as st
 from PIL import Image
 from googletrans import Translator
 
+with open('sentimiento.json') as source:
+  animation=json.load(source)
+st.lottie(animation,width=350)
+
 st.title('Análisis de Sentimiento')
 image = Image.open('emoticones.jpg')
 st.image(image)
