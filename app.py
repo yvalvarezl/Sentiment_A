@@ -56,7 +56,17 @@ with st.expander('🔍 Analizar texto', expanded=True):
             blob = TextBlob(trans_text)
             
             polarity = round(blob.sentiment.polarity, 2)
-            subjectivity = round(blob.sentiment.subjectivity, 2)
+            
+            # --- AJUSTE DE SENSIBILIDAD PARA NIÑOS (Detección de Frustración / Tristeza) ---
+            text_lower = text.lower()
+            palabras_tristes_frustracion = [
+                "no me deja", "no me quiere llevar", "no me quiere", "no puedo", 
+                "triste", "enojado", "molesto", "aburrido", "llorar", "feo", "solo"
+            ]
+            
+            # Si el texto contiene frases de deseo no cumplido o tristeza implícita y la polaridad dio neutral (0.0):
+            if any(p in text_lower for p in palabras_tristes_frustracion) and polarity >= 0.0:
+                polarity = -0.35  # Asignamos un sesgo negativo razonable
             
             # Mapeo de polaridad a porcentaje (0% a 100%)
             porcentaje_animo = int((polarity + 1) * 50)
@@ -79,11 +89,8 @@ with st.expander('🔍 Analizar texto', expanded=True):
                 st.success(f"😄 **{nombre_nino} expresa un sentimiento Positivo ({porcentaje_animo}%)**")
                 st.write(f"💡 **Consejo:** Aprovecha este momento para preguntarle qué fue lo que más le gustó de su día y reforzar sus emociones positivas.")
             elif polarity < -0.1:
-                st.error(f"😔 **{nombre_nino} expresa un sentimiento de Tristeza, Incomodidad o Molestia ({porcentaje_animo}%)**")
-                st.write(f"💡 **Consejo:** Acércate con empatía a {nombre_nino}. Escúchalo/a sin interrumpir y valida sus emociones diciéndole que es normal sentirse así.")
+                st.error(f"😔 **{nombre_nino} expresa un sentimiento de Tristeza, Incomodidad o Frustración ({porcentaje_animo}%)**")
+                st.write(f"💡 **Consejo:** Acércate con empatía a {nombre_nino}. Escúchalo/a sin interrumpir y valida sus emociones diciéndole que es normal sentirse así cuando no podemos hacer algo que deseamos.")
             else:
                 st.info(f"😐 **{nombre_nino} expresa un sentimiento Neutral o Calmo ({porcentaje_animo}%)**")
                 st.write(f"💡 **Consejo:** El texto narra situaciones sin reflejar emociones intensas. Puedes preguntarle libremente cómo se sintió durante lo que relata.")
-
-            # Muestra únicamente la métrica general de polaridad
-            st.metric("Puntaje de Emoción (Polaridad)", polarity)
