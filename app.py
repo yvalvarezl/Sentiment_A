@@ -12,7 +12,7 @@ with open('sentimiento.json') as source:
   animation=json.load(source)
 st.lottie(animation,width=350)
 
-st.title('Análisis de Sentimiento')
+st.title('🎈 Emocionómetro Infantil')
 image = Image.open('emoticones.jpg')
 st.image(image)
 st.subheader("Por favor escribe en el campo de texto la frase que deseas analizar")
