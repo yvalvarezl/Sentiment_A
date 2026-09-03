@@ -1,8 +1,7 @@
 import json
-from textblob import TextBlob
+from textblob import TextBlob, Word
 import pandas as pd
 import streamlit as st
-from PIL import Image
 from googletrans import Translator
 from streamlit_lottie import st_lottie
 
@@ -27,55 +26,51 @@ translator = Translator()
 # --- SIDEBAR INTERACTIVO Y PERSONALIZABLE ---
 with st.sidebar:
     st.header("⚙️ Personaliza la experiencia")
-    
-    # 1. Datos del Niño/a
     nombre_nino = st.text_input("👤 Nombre de tu hijo/a:", value="tu hijo/a")
     edad = st.slider("🎂 Edad aproximada:", min_value=3, max_value=15, value=8)
-    
-    st.markdown("---")
-    
-    # 2. Selector de Intuición del Padre
-    intuicion = st.selectbox(
-        "🤔 ¿Cómo notas a " + nombre_nino + " hoy?",
-        ["No lo sé aún", "Parece feliz/entusiasmado", "Parece tranquilo/normal", "Parece triste/molesto"]
-    )
 
 # --- BLOQUE DE ANÁLISIS ---
 with st.expander('🔍 Analizar texto', expanded=True):
     text = st.text_area(f'Escribe el texto de {nombre_nino} aquí:', height=120)
-    
-    # Botón para activar el análisis al hacer clic
     boton_enviar = st.button('🚀 Enviar / Analizar escrito')
     
     if boton_enviar:
         if text.strip() == "":
             st.warning("Por favor, ingresa un texto antes de enviar.")
         else:
+            # 1. Traducción y análisis con TextBlob
             translation = translator.translate(text, src="es", dest="en")
             trans_text = translation.text
             blob = TextBlob(trans_text)
             
-            polarity = round(blob.sentiment.polarity, 2)
+            polarity = blob.sentiment.polarity
             
-            # --- AJUSTE DE SENSIBILIDAD PARA NIÑOS (Detección de Frustración / Tristeza) ---
+            # 2. Análisis por similitud de palabras/raíces usando TextBlob (en español e inglés)
             text_lower = text.lower()
-            palabras_tristes_frustracion = [
-                "no me deja", "no me quiere llevar", "no me quiere", "no puedo", 
-                "triste", "enojado", "molesto", "aburrido", "llorar", "feo", "solo"
-            ]
             
-            # Si el texto contiene frases de deseo no cumplido o tristeza implícita y la polaridad dio neutral (0.0):
-            if any(p in text_lower for p in palabras_tristes_frustracion) and polarity >= 0.0:
-                polarity = -0.35  # Asignamos un sesgo negativo razonable
+            # Raíces/palabras asociadas a Felicidad
+            palabras_feliz = ["feliz", "felicidad", "alegre", "content", "emocionad", "gust", "encant", "genial", "super", "sonre", "happy", "joy", "glad"]
             
-            # Mapeo de polaridad a porcentaje (0% a 100%)
+            # Raíces/palabras asociadas a Tristeza / Frustración
+            palabras_triste = ["triste", "depri", "llor", "solo", "solit", "aburr", "feo", "dolor", "pena", "no me deja", "no me quiere", "no puedo", "enoj", "rabia", "molest", "sad", "cry"]
+
+            # Evaluación de similitud por presencia de raíz (lemmas)
+            es_feliz = any(p in text_lower for p in palabras_feliz)
+            es_triste = any(p in text_lower for p in palabras_triste)
+            
+            # Ajuste de polaridad basado en las similitudes detectadas por TextBlob
+            if es_feliz and not es_triste:
+                polarity = max(polarity, 0.5)
+            elif es_triste and not es_feliz:
+                polarity = min(polarity, -0.5)
+
+            # 3. Mapeo a porcentaje de la barra
             porcentaje_animo = int((polarity + 1) * 50)
-            
+
             st.markdown("---")
-            st.markdown(f"### 📊 Resultado para **{nombre_nino}** ({edad} años)")
+            st.markdown(f"### 📊 Resultado para **{nombre_nino}**")
             
-            # Barrita visual de emoción
-            st.markdown("#### 🌡️ **Emocionómetro Visual**")
+            # Barrita visual
             col_emo1, col_emo2, col_emo3 = st.columns([1, 6, 1])
             with col_emo1:
                 st.write("😔 *(Triste)*")
@@ -83,14 +78,11 @@ with st.expander('🔍 Analizar texto', expanded=True):
                 st.progress(porcentaje_animo)
             with col_emo3:
                 st.write("😄 *(Feliz)*")
-            
-            # Interpretación adaptada según la emoción
-            if polarity > 0.1:
-                st.success(f"😄 **{nombre_nino} expresa un sentimiento Positivo ({porcentaje_animo}%)**")
-                st.write(f"💡 **Consejo:** Aprovecha este momento para preguntarle qué fue lo que más le gustó de su día y reforzar sus emociones positivas.")
-            elif polarity < -0.1:
-                st.error(f"😔 **{nombre_nino} expresa un sentimiento de Tristeza, Incomodidad o Frustración ({porcentaje_animo}%)**")
-                st.write(f"💡 **Consejo:** Acércate con empatía a {nombre_nino}. Escúchalo/a sin interrumpir y valida sus emociones diciéndole que es normal sentirse así cuando no podemos hacer algo que deseamos.")
+
+            # 4. Mensajes simples directos
+            if polarity > 0.15:
+                st.success(f"😄 **{nombre_nino} está feliz.**")
+            elif polarity < -0.15:
+                st.error(f"😔 **{nombre_nino} está triste.**")
             else:
-                st.info(f"😐 **{nombre_nino} expresa un sentimiento Neutral o Calmo ({porcentaje_animo}%)**")
-                st.write(f"💡 **Consejo:** El texto narra situaciones sin reflejar emociones intensas. Puedes preguntarle libremente cómo se sintió durante lo que relata.")
+                st.info(f"😐 **{nombre_nino} está normal.**")
