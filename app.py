@@ -39,58 +39,51 @@ with st.sidebar:
         "🤔 ¿Cómo notas a " + nombre_nino + " hoy?",
         ["No lo sé aún", "Parece feliz/entusiasmado", "Parece tranquilo/normal", "Parece triste/molesto"]
     )
-    
-    st.markdown("---")
-    
-    # 3. Explicación interactiva con Tabs
-    st.subheader("💡 Guía de Análisis")
-    tab_pol, tab_sub = st.tabs(["Polaridad", "Subjetividad"])
-    
-    with tab_pol:
-        st.caption(
-            "Indica la carga emocional del escrito (-1 muy negativo a +1 muy positivo). "
-            "Nos ayuda a detectar si hay tristeza, frustración o alegría implícita."
-        )
-    with tab_sub:
-        st.caption(
-            "Mide qué tanto expresa sus propias emociones (1.0) frente a solo contar hechos u objetos externos (0.0)."
-        )
 
 # --- BLOQUE DE ANÁLISIS ---
 with st.expander('🔍 Analizar texto', expanded=True):
     text = st.text_area(f'Escribe el texto de {nombre_nino} aquí:', height=120)
     
-    if text:
-        translation = translator.translate(text, src="es", dest="en")
-        trans_text = translation.text
-        blob = TextBlob(trans_text)
-        
-        polarity = round(blob.sentiment.polarity, 2)
-        subjectivity = round(blob.sentiment.subjectivity, 2)
-        
-        st.markdown("---")
-        st.markdown(f"### 📊 Resultado para **{nombre_nino}** ({edad} años)")
-        
-        # Interpretación adaptada según la edad y resultados
-        if polarity > 0.1:
-            st.success(f"😊 **{nombre_nino} expresa un sentimiento Positivo**")
-            st.write(f"💡 **Consejo:** Aprovecha este momento para preguntarle qué fue lo que más le gustó de su día y reforzar sus emociones positivas.")
-        elif polarity < -0.1:
-            st.error(f"😔 **{nombre_nino} expresa un sentimiento de Tristeza, Incomodidad o Molestia**")
-            st.write(f"💡 **Consejo:** Acércate con empatía a {nombre_nino}. Escúchalo/a sin interrumpir y valida sus emociones diciéndole que es normal sentirse así.")
+    # Botón para activar el análisis al hacer clic
+    boton_enviar = st.button('🚀 Enviar / Analizar escrito')
+    
+    if boton_enviar:
+        if text.strip() == "":
+            st.warning("Por favor, ingresa un texto antes de enviar.")
         else:
-            st.info(f"😐 **{nombre_nino} expresa un sentimiento Neutral o Calmo**")
-            st.write(f"💡 **Consejo:** El texto narra situaciones sin reflejar emociones intensas. Puedes preguntarle libremente cómo se sintió durante lo que relata.")
+            translation = translator.translate(text, src="es", dest="en")
+            trans_text = translation.text
+            blob = TextBlob(trans_text)
+            
+            polarity = round(blob.sentiment.polarity, 2)
+            subjectivity = round(blob.sentiment.subjectivity, 2)
+            
+            # Mapeo de polaridad a porcentaje (0% a 100%)
+            porcentaje_animo = int((polarity + 1) * 50)
+            
+            st.markdown("---")
+            st.markdown(f"### 📊 Resultado para **{nombre_nino}** ({edad} años)")
+            
+            # Barrita visual de emoción
+            st.markdown("#### 🌡️ **Emocionómetro Visual**")
+            col_emo1, col_emo2, col_emo3 = st.columns([1, 6, 1])
+            with col_emo1:
+                st.write("😔 *(Triste)*")
+            with col_emo2:
+                st.progress(porcentaje_animo)
+            with col_emo3:
+                st.write("😄 *(Feliz)*")
+            
+            # Interpretación adaptada según la emoción
+            if polarity > 0.1:
+                st.success(f"😄 **{nombre_nino} expresa un sentimiento Positivo ({porcentaje_animo}%)**")
+                st.write(f"💡 **Consejo:** Aprovecha este momento para preguntarle qué fue lo que más le gustó de su día y reforzar sus emociones positivas.")
+            elif polarity < -0.1:
+                st.error(f"😔 **{nombre_nino} expresa un sentimiento de Tristeza, Incomodidad o Molestia ({porcentaje_animo}%)**")
+                st.write(f"💡 **Consejo:** Acércate con empatía a {nombre_nino}. Escúchalo/a sin interrumpir y valida sus emociones diciéndole que es normal sentirse así.")
+            else:
+                st.info(f"😐 **{nombre_nino} expresa un sentimiento Neutral o Calmo ({porcentaje_animo}%)**")
+                st.write(f"💡 **Consejo:** El texto narra situaciones sin reflejar emociones intensas. Puedes preguntarle libremente cómo se sintió durante lo que relata.")
 
-        # Detalle de Subjetividad
-        st.markdown("---")
-        st.markdown("#### 📝 Nivel de Expresión Emocional")
-        if subjectivity > 0.5:
-            st.write(f"✨ {nombre_nino} está expresando sus **sentimientos y opiniones de forma muy personal**.")
-        else:
-            st.write(f"📖 {nombre_nino} está haciendo una **descripción objetiva o contando un suceso**.")
-
-        # Métricas técnicas
-        col_m1, col_m2 = st.columns(2)
-        col_m1.metric("Puntaje de Emoción (Polaridad)", polarity)
-        col_m2.metric("Puntaje de Expresión (Subjetividad)", subjectivity)
+            # Muestra únicamente la métrica general de polaridad
+            st.metric("Puntaje de Emoción (Polaridad)", polarity)
