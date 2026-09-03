@@ -15,7 +15,8 @@ st.lottie(animation,width=350)
 st.title('🎈 Emocionómetro Infantil')
 image = Image.open('emoticones.jpg')
 st.image(image)
-st.subheader("Por favor escribe en el campo de texto la frase que deseas analizar")
+st.subheader("Acompaña el bienestar emocional de tus hijos a través de sus escritos 💛")
+st.write("Escribe o pega aquí el cuento, nota o entrada del diario que escribió tu hijo para descubrir cómo se siente.")
 
 translator = Translator()
 
