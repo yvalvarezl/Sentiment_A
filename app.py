@@ -7,7 +7,7 @@ import streamlit as st
 from PIL import Image
 from googletrans import Translator
 
-with open('sentimiento.json') as source:
+with open('Jumping Emoji.json') as source:
   animation=json.load(source)
 st.lottie(animation,width=350)
 
